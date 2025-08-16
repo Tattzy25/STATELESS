@@ -97,3 +97,10 @@ temp/
 
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
+
+# Internal documentation (DO NOT COMMIT)
+INTERNAL_*.md
+INTERNAL_*.txt
+INTERNAL_*
+*.internal.md
+*.internal.txt

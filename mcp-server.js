@@ -158,8 +158,8 @@ server.tool(
                 available: !!config.V0_API_KEY
               },
               'ai-gateway': {
-                model: config.AI_GATEWAY_MODEL || 'anthropic/claude-sonnet-4',
-                baseUrl: config.AI_GATEWAY_BASE_URL || 'https://ai-gateway.vercel.sh/v1',
+                model: config.AI_GATEWAY_MODEL || 'anthropic/claude-4-sonnet',
+                baseUrl: config.AI_GATEWAY_BASE_URL || 'https://gateway.ai.cloudflare.com/v1',
                 available: !!config.AI_GATEWAY_API_KEY
               }
             },

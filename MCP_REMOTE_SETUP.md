@@ -8,12 +8,12 @@ This dual AI orchestrator is now available as a **remote MCP server** that can b
 
 ### Public Endpoint (No Authentication)
 ```
-https://your-app-name.vercel.app/api/mcp/mcp
+https://b2b2u.vercel.app/api/mcp/mcp
 ```
 
 ### Authenticated Endpoint (API Key Required)
 ```
-https://your-app-name.vercel.app/api/mcp/auth/mcp
+https://b2b2u.vercel.app/api/mcp/auth/mcp
 ```
 
 ## 🔧 Client Configuration
@@ -26,7 +26,7 @@ Add to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "dual-ai-remote": {
-      "url": "https://your-app-name.vercel.app/api/mcp/mcp",
+      "url": "https://b2b2u.vercel.app/api/mcp/mcp",
       "description": "Remote dual AI orchestrator (V0.dev + AI Gateway)"
     }
   }
@@ -41,7 +41,7 @@ Add to `.cursor/mcp.json`:
 {
   "mcpServers": {
     "dual-ai-remote": {
-      "url": "https://your-app-name.vercel.app/api/mcp/mcp"
+      "url": "https://b2b2u.vercel.app/api/mcp/mcp"
     }
   }
 }
@@ -55,7 +55,7 @@ Add to your VS Code `settings.json`:
 {
   "mcp.servers": {
     "dual-ai-remote": {
-      "url": "https://your-app-name.vercel.app/api/mcp/mcp",
+      "url": "https://b2b2u.vercel.app/api/mcp/mcp",
       "transport": "http"
     }
   }
@@ -66,11 +66,12 @@ Add to your VS Code `settings.json`:
 
 For enhanced features and rate limiting, use the authenticated endpoint:
 
-### Demo API Keys
+### API Keys
 
-- **Free Tier**: `demo-key-123`
-- **Pro Tier**: `pro-key-456` 
-- **Enterprise Tier**: `enterprise-key-789`
+Generate secure API keys for each tier (minimum 32 characters):
+- **Free Tier**: Set `MCP_FREE_API_KEY` in your environment
+- **Pro Tier**: Set `MCP_PRO_API_KEY` in your environment
+- **Enterprise Tier**: Set `MCP_ENTERPRISE_API_KEY` in your environment
 
 ### Authenticated Configuration
 
@@ -78,9 +79,9 @@ For enhanced features and rate limiting, use the authenticated endpoint:
 {
   "mcpServers": {
     "dual-ai-auth": {
-      "url": "https://your-app-name.vercel.app/api/mcp/auth/mcp",
+      "url": "https://b2b2u.vercel.app/api/mcp/auth/mcp",
       "headers": {
-        "Authorization": "Bearer your-api-key-here"
+        "Authorization": "Bearer ${MCP_PRO_API_KEY}"
       }
     }
   }
@@ -163,10 +164,10 @@ Use generate-dual for complex prompts requiring both React expertise and general
 
 ```bash
 # Test the public endpoint
-npx @modelcontextprotocol/inspector@latest https://your-app-name.vercel.app/api/mcp/mcp
+npx @modelcontextprotocol/inspector@latest https://b2b2u.vercel.app/api/mcp/mcp
 
 # Test the authenticated endpoint
-npx @modelcontextprotocol/inspector@latest https://your-app-name.vercel.app/api/mcp/auth/mcp
+npx @modelcontextprotocol/inspector@latest https://b2b2u.vercel.app/api/mcp/auth/mcp
 ```
 
 ### Manual Testing

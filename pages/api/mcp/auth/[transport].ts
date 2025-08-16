@@ -16,28 +16,55 @@ type MyAuthInfo = AuthInfo & {
 
 // Simple API key validation (replace with your auth system)
 const validateApiKey = async (apiKey: string): Promise<MyAuthInfo | undefined> => {
-  // In production, validate against your database/auth service
-  const validKeys = {
-    'demo-key-123': { id: 'user1', name: 'Demo User', tier: 'free' as const },
-    'pro-key-456': { id: 'user2', name: 'Pro User', tier: 'pro' as const },
-    'enterprise-key-789': { id: 'user3', name: 'Enterprise User', tier: 'enterprise' as const },
-  };
+  try {
+    // Validate API key format (should be a valid UUID or similar)
+    if (!apiKey || apiKey.length < 32) {
+      return undefined;
+    }
 
-  const user = validKeys[apiKey as keyof typeof validKeys];
-  if (!user) return undefined;
+    // In production, this would validate against your database/auth service
+    // For now, we'll use environment variables for valid API keys
+    const validApiKeys = {
+      [process.env.MCP_FREE_API_KEY || '']: { id: 'free-user', name: 'Free User', tier: 'free' as const },
+      [process.env.MCP_PRO_API_KEY || '']: { id: 'pro-user', name: 'Pro User', tier: 'pro' as const },
+      [process.env.MCP_ENTERPRISE_API_KEY || '']: { id: 'enterprise-user', name: 'Enterprise User', tier: 'enterprise' as const },
+    };
 
-  return {
-    token: apiKey,
-    clientId: user.id,
-    scopes: ['ai:generate', 'ai:config'],
-    user,
-  };
+    const user = validApiKeys[apiKey];
+    if (!user) {
+      console.warn(`[AUTH] Invalid API key attempted: ${apiKey.substring(0, 8)}...`);
+      return undefined;
+    }
+
+    console.log(`[AUTH] Valid API key for user: ${user.name} (${user.tier})`);
+    return {
+      token: apiKey,
+      clientId: user.id,
+      scopes: ['ai:generate', 'ai:config'],
+      user,
+    };
+  } catch (error) {
+    console.error('[AUTH] Error validating API key:', error);
+    return undefined;
+  }
 };
 
 // Rate limiting based on user tier
 const checkRateLimit = (user: MyAuthInfo['user']): boolean => {
-  // Implement your rate limiting logic here
-  // For demo purposes, always allow
+  // In production, implement proper rate limiting with Redis or similar
+  // For now, implement basic tier-based limits
+  const rateLimits = {
+    free: 10, // 10 requests per hour
+    pro: 100, // 100 requests per hour
+    enterprise: 1000, // 1000 requests per hour
+  };
+
+  // This is a simplified implementation
+  // In production, you would track requests per user per time window
+  const limit = rateLimits[user.tier];
+  
+  // For now, always allow but log the limit
+  console.log(`[RATE_LIMIT] User ${user.name} has limit of ${limit} requests/hour`);
   return true;
 };
 

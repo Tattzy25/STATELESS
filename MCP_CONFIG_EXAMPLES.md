@@ -10,14 +10,14 @@ The main configuration file is now valid JSON without comments:
 {
   "mcpServers": {
     "dual-ai-orchestrator-remote": {
-      "url": "https://your-vercel-app.vercel.app/api/mcp/mcp",
+      "url": "https://b2b2u.vercel.app/api/mcp/mcp",
       "description": "Remote Dual AI Orchestrator - Public Access"
     },
     "dual-ai-orchestrator-auth": {
-      "url": "https://your-vercel-app.vercel.app/api/mcp/auth/mcp",
+      "url": "https://b2b2u.vercel.app/api/mcp/auth/mcp",
       "description": "Remote Dual AI Orchestrator - Authenticated Access",
       "env": {
-        "MCP_PROXY_AUTH_TOKEN": "your-api-key-here"
+        "MCP_PROXY_AUTH_TOKEN": "${MCP_PRO_API_KEY}"
       }
     }
   }
@@ -32,8 +32,8 @@ Use the configuration above directly in your Claude Desktop config file.
 ### OpenAI ChatGPT
 ChatGPT supports MCP through custom GPTs and API integrations.
 Use these HTTPS endpoints in your custom GPT actions:
-- **Public**: `https://your-vercel-app.vercel.app/api/mcp/mcp`
-- **Authenticated**: `https://your-vercel-app.vercel.app/api/mcp/auth/mcp`
+- **Public**: `https://b2b2u.vercel.app/api/mcp/mcp`
+- **Authenticated**: `https://b2b2u.vercel.app/api/mcp/auth/mcp`
 
 ### Cursor IDE
 ```json
@@ -41,7 +41,7 @@ Use these HTTPS endpoints in your custom GPT actions:
   "mcp": {
     "servers": {
       "dual-ai-orchestrator": {
-        "url": "https://your-vercel-app.vercel.app/api/mcp/mcp"
+        "url": "https://b2b2u.vercel.app/api/mcp/mcp"
       }
     }
   }
@@ -53,7 +53,7 @@ Use these HTTPS endpoints in your custom GPT actions:
 {
   "github.copilot.chat.mcp.servers": {
     "dual-ai-orchestrator": {
-      "url": "https://your-vercel-app.vercel.app/api/mcp/mcp"
+      "url": "https://b2b2u.vercel.app/api/mcp/mcp"
     }
   }
 }
@@ -80,8 +80,8 @@ MCP (Model Context Protocol) is provider-agnostic and works with:
 
 ## 🌐 Endpoints
 
-- **Public Access**: `https://your-vercel-app.vercel.app/api/mcp/mcp`
-- **Authenticated Access**: `https://your-vercel-app.vercel.app/api/mcp/auth/mcp`
+- **Public Access**: `https://b2b2u.vercel.app/api/mcp/mcp`
+- **Authenticated Access**: `https://b2b2u.vercel.app/api/mcp/auth/mcp`
 
 ## 🔑 Authentication
 
@@ -89,4 +89,4 @@ For authenticated access, set the `MCP_PROXY_AUTH_TOKEN` environment variable or
 
 ---
 
-**Note**: Replace `your-vercel-app.vercel.app` with your actual Vercel deployment URL.
+**Note**: The endpoints are configured for the b2b2u.vercel.app deployment.

@@ -1,14 +1,14 @@
 {
   "mcpServers": {
     "dual-ai-orchestrator-remote": {
-      "url": "https://your-vercel-app.vercel.app/api/mcp/mcp",
+      "url": "https://b2b2u.vercel.app/api/mcp/mcp",
       "description": "Remote Dual AI Orchestrator - Public Access"
     },
     "dual-ai-orchestrator-auth": {
-      "url": "https://your-vercel-app.vercel.app/api/mcp/auth/mcp",
+      "url": "https://b2b2u.vercel.app/api/mcp/auth/mcp",
       "description": "Remote Dual AI Orchestrator - Authenticated Access",
       "env": {
-        "MCP_PROXY_AUTH_TOKEN": "your-api-key-here"
+        "MCP_PROXY_AUTH_TOKEN": "${MCP_PRO_API_KEY}"
       }
     }
   },
@@ -22,8 +22,8 @@
       "Any MCP-compatible client"
     ],
     "endpoints": {
-      "public": "https://your-vercel-app.vercel.app/api/mcp/mcp",
-      "authenticated": "https://your-vercel-app.vercel.app/api/mcp/auth/mcp"
+      "public": "https://b2b2u.vercel.app/api/mcp/mcp",
+    "authenticated": "https://b2b2u.vercel.app/api/mcp/auth/mcp"
     },
     "tools": [
       "generate-v0: Generate UI components using V0.dev",
