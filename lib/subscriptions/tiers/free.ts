@@ -1,7 +1,7 @@
 import { SubscriptionTier } from '../schemas';
 
 export const FREE_TIER_CONFIG = {
-  tier: SubscriptionTier.FREE,
+  tier: SubscriptionTier.MCP_FREE,
   price: 0,
   monthlyCredits: 5, // $5 usage credit per month
   projectLimit: 200,

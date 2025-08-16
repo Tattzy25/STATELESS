@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { createMcpHandler } from 'mcp-handler';
 import { callV0Dev, callAIGateway } from '../../../lib/callAIs';
-import { orchestrateAICalls } from '../../../lib/orchestrator';
-import { getAvailableModels } from '../../../lib/config';
+import { orchestrate, OrchestrationOptions } from '../../../lib/orchestrator';
+import { getAvailableModels, TIER_CONFIGS, TierType } from '../../../lib/config';
 import { 
   subscriptionManager, 
   SubscriptionTier, 
@@ -11,6 +11,7 @@ import {
   subscriptionSchema,
   projectSchema
 } from '../../../lib/subscriptions';
+import { StatelessSubscriptionValidator } from '../../../lib/subscriptions/stateless-validator';
 
 // Define input schemas for our tools
 const generateSchema = z.object({
@@ -23,6 +24,7 @@ const generateSchema = z.object({
 const dualGenerateSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required'),
   systemPrompt: z.string().optional(),
+  tier: z.enum(['basic', 'premium', 'enterprise']).default('basic'),
   v0Model: z.string().optional(),
   gatewayModel: z.string().optional(),
   userId: z.string().optional().default('anonymous'),
@@ -38,36 +40,58 @@ const handler = createMcpHandler(
       generateSchema,
       async ({ prompt, systemPrompt, model, userId }) => {
         try {
-          // Check user subscription and usage limits
+          // Get user context from subscription manager (for MCP compatibility)
           const user = subscriptionManager.getUserSubscription(userId);
+          const apiKeys = subscriptionManager.getUserApiKeys(userId);
           
-          // Check if user has credits or completions
-          if (!subscriptionManager.hasCreditsRemaining(userId, 1) && !subscriptionManager.hasCompletionsRemaining(userId)) {
+          // Create user context for stateless validation
+          const userContext = {
+            userId,
+            tier: user.tier,
+            usage: {
+              credits: user.creditsRemaining,
+              completions: user.completionsUsed,
+              completionsUsed: user.completionsUsed,
+              projects: user.projectsCreated,
+              hasDualAccess: user.hasDualAccess
+            },
+            apiKeys: {
+              v0ApiKey: apiKeys?.v0ApiKey,
+              claudeApiKey: apiKeys?.claudeApiKey
+            }
+          };
+          
+          // Validate action using stateless validator
+          const validation = StatelessSubscriptionValidator.validateAction(userContext, 'single-ai');
+          
+          if (!validation.canProceed) {
             return {
               content: [{
                 type: 'text',
-                text: `❌ Usage limit reached. Current tier: ${user.tier}\n\n💡 Upgrade to Pro ($20/month) for 300 completions + $20 credits\n💡 Or purchase credits: $3 (50 completions), $5 (150 completions), $7 (300 completions), $10 (500 completions)\n\n🔥 Any purchase unlocks Dual AI Builder!`
+                text: validation.error || 'Usage limit reached'
               }]
             };
           }
           
-          // Use appropriate API keys (BYOK or server keys)
-          const apiKeys = subscriptionManager.getUserApiKeys(userId);
-          const v0ApiKey = (user.tier === SubscriptionTier.PRO_BYOK && apiKeys?.v0ApiKey) ? apiKeys.v0ApiKey : undefined;
+          // Get API keys to use
+          const keys = StatelessSubscriptionValidator.getApiKeys(userContext);
           
-          const result = await callV0Dev(prompt, systemPrompt, model, v0ApiKey);
+          const result = await callV0Dev(prompt, systemPrompt, model, keys.v0ApiKey);
           
-          // Deduct usage
+          // Deduct usage in subscription manager (for MCP state persistence)
           if (subscriptionManager.hasCompletionsRemaining(userId)) {
             subscriptionManager.useCompletion(userId);
           } else {
             subscriptionManager.useCredits(userId, 1);
           }
           
+          // Get updated usage for response
+          const updatedUser = subscriptionManager.getUserSubscription(userId);
+          
           return {
             content: [{
               type: 'text',
-              text: `✅ V0.dev Response (${user.tier} tier):\n${result}\n\n📊 Usage: ${user.completionsUsed} completions used, $${user.creditsRemaining} credits remaining`
+              text: `✅ V0.dev Response (${user.tier} tier):\n${result}\n\n📊 Usage: ${updatedUser.completionsUsed} completions used, $${updatedUser.creditsRemaining} credits remaining`
             }]
           };
         } catch (error) {
@@ -103,7 +127,7 @@ const handler = createMcpHandler(
           
           // Use appropriate API keys (BYOK or server keys)
           const apiKeys = subscriptionManager.getUserApiKeys(userId);
-          const claudeApiKey = (user.tier === SubscriptionTier.PRO_BYOK && apiKeys?.claudeApiKey) ? apiKeys.claudeApiKey : undefined;
+          const claudeApiKey = (user.tier === SubscriptionTier.MCP_PRO_BYOK && apiKeys?.claudeApiKey) ? apiKeys.claudeApiKey : undefined;
           
           const result = await callAIGateway(prompt, systemPrompt, model, claudeApiKey);
           
@@ -136,7 +160,7 @@ const handler = createMcpHandler(
       'generate-dual',
       '🔥 Dual AI Builder: Generate using both V0.dev and AI Gateway for comprehensive results (Premium feature - unlocked with any purchase)',
       dualGenerateSchema,
-      async ({ prompt, systemPrompt, v0Model, gatewayModel, userId }) => {
+      async ({ prompt, systemPrompt, tier, v0Model, gatewayModel, userId }) => {
         try {
           // Check user subscription and dual AI access
           const user = subscriptionManager.getUserSubscription(userId);
@@ -151,38 +175,66 @@ const handler = createMcpHandler(
             };
           }
           
-          // Check if user has enough credits (dual AI costs 2 credits)
-          if (!subscriptionManager.hasCreditsRemaining(userId, 2) && !subscriptionManager.hasCompletionsRemaining(userId)) {
+          // Validate tier access based on user subscription
+          const requestedTier = tier as TierType;
+          if (requestedTier === 'premium' && user.tier === 'free') {
             return {
               content: [{
                 type: 'text',
-                text: `❌ Insufficient credits for Dual AI (requires 2 credits). Current tier: ${user.tier}\n\n💡 Purchase more credits: $3 (50 completions), $5 (150 completions), $7 (300 completions), $10 (500 completions)`
+                text: `🔒 Premium tier requires a paid subscription. Current tier: ${user.tier}`
+              }]
+            };
+          }
+          
+          if (requestedTier === 'enterprise' && !['pro', 'enterprise'].includes(user.tier)) {
+            return {
+              content: [{
+                type: 'text',
+                text: `🔒 Enterprise tier requires a pro or enterprise subscription. Current tier: ${user.tier}`
+              }]
+            };
+          }
+          
+          // Check if user has enough credits (dual AI costs based on tier)
+          const tierConfig = TIER_CONFIGS[requestedTier];
+          const creditsRequired = Math.ceil(tierConfig.estimatedCost / 10); // Convert cost to credits
+          
+          if (!subscriptionManager.hasCreditsRemaining(userId, creditsRequired) && !subscriptionManager.hasCompletionsRemaining(userId)) {
+            return {
+              content: [{
+                type: 'text',
+                text: `❌ Insufficient credits for ${requestedTier} tier Dual AI (requires ${creditsRequired} credits). Current tier: ${user.tier}\n\n💡 Purchase more credits: $3 (50 completions), $5 (150 completions), $7 (300 completions), $10 (500 completions)`
               }]
             };
           }
           
           // Use appropriate API keys (BYOK or server keys)
           const apiKeys = subscriptionManager.getUserApiKeys(userId);
-          const v0ApiKey = (user.tier === SubscriptionTier.PRO_BYOK && apiKeys?.v0ApiKey) ? apiKeys.v0ApiKey : undefined;
-          const claudeApiKey = (user.tier === SubscriptionTier.PRO_BYOK && apiKeys?.claudeApiKey) ? apiKeys.claudeApiKey : undefined;
+          const v0ApiKey = (user.tier === SubscriptionTier.MCP_PRO_BYOK && apiKeys?.v0ApiKey) ? apiKeys.v0ApiKey : undefined;
+        const claudeApiKey = (user.tier === SubscriptionTier.MCP_PRO_BYOK && apiKeys?.claudeApiKey) ? apiKeys.claudeApiKey : undefined;
           
-          // Run both providers in parallel
-          const [v0Result, gatewayResult] = await Promise.all([
-            callV0Dev(prompt, systemPrompt, v0Model, v0ApiKey),
-            callAIGateway(prompt, systemPrompt, gatewayModel, claudeApiKey)
-          ]);
+          // Use the new orchestrate function with tier support
+          const orchestrationOptions: OrchestrationOptions = {
+            tier: requestedTier,
+            apiKeys: {
+              v0: v0ApiKey,
+              aiGateway: claudeApiKey
+            }
+          };
           
-          // Deduct usage (2 credits for dual AI)
+          const result = await orchestrate(prompt, orchestrationOptions);
+          
+          // Deduct usage based on tier cost
           if (subscriptionManager.hasCompletionsRemaining(userId)) {
             subscriptionManager.useCompletion(userId);
           } else {
-            subscriptionManager.useCredits(userId, 2);
+            subscriptionManager.useCredits(userId, creditsRequired);
           }
           
           return {
             content: [{
               type: 'text',
-              text: `🚀 Dual AI Builder Results (${user.tier} tier):\n\n## 🎨 V0.dev Response (Frontend Design):\n${v0Result}\n\n## 🧠 AI Gateway Response (Backend Logic):\n${gatewayResult}\n\n📊 Usage: ${user.completionsUsed} completions used, $${user.creditsRemaining} credits remaining`
+              text: `🚀 Dual AI Builder Results (${result.tier} tier - ${result.tierDescription}):\n\n${result.result}\n\n💰 Estimated Cost: $${result.estimatedCost.toFixed(4)}\n📊 Usage: ${user.completionsUsed} completions used, $${user.creditsRemaining} credits remaining`
             }]
           };
         } catch (error) {
@@ -199,7 +251,7 @@ const handler = createMcpHandler(
     // Tool 4: Get available models and configuration
     server.tool(
       'get-config',
-      'Get available AI models and configuration for both providers',
+      'Get available AI models, tier configurations, and subscription info',
       z.object({}),
       async () => {
         try {
@@ -209,6 +261,7 @@ const handler = createMcpHandler(
               type: 'text',
               text: `Available Configuration:\n${JSON.stringify({
                 ...models,
+                tierConfigs: TIER_CONFIGS,
                 subscriptionTiers: SUBSCRIPTION_CONFIGS,
                 creditPackages: CREDIT_PACKAGES
               }, null, 2)}`

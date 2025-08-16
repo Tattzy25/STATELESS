@@ -1,7 +1,7 @@
 import { SubscriptionTier } from '../schemas';
 
 export const PRO_BYOK_TIER_CONFIG = {
-  tier: SubscriptionTier.PRO_BYOK,
+  tier: SubscriptionTier.MCP_PRO_BYOK,
   price: 10, // 50% discount
   monthlyCredits: 20, // Same credits as Pro
   projectLimit: -1, // Unlimited

@@ -31,7 +31,7 @@ export async function callV0Dev(prompt: string, systemPrompt?: string, model?: s
 
 // AI Gateway using AI SDK
 export async function callAIGateway(prompt: string, systemPrompt?: string, model?: string, apiKey?: string) {
-  const finalSystemPrompt = systemPrompt || getSystemPrompt('gateway5');
+  const finalSystemPrompt = systemPrompt || getSystemPrompt('gate5');
   const finalModel = model || AI_GATEWAY_MODEL;
   const finalApiKey = apiKey || AI_GATEWAY_API_KEY;
   

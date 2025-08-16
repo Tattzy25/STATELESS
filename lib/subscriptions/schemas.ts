@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
-// Subscription tier definitions
+// MCP Subscription tier definitions
 export enum SubscriptionTier {
-  FREE = 'free',
-  PRO = 'pro',
-  PRO_BYOK = 'pro_byok'
+  MCP_FREE = 'mcp_free',
+  MCP_PRO = 'mcp_pro',
+  MCP_PRO_BYOK = 'mcp_pro_byok'
 }
 
 // User subscription schema

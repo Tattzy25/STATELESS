@@ -11,8 +11,8 @@ export class SubscriptionManager {
     if (!this.users.has(userId)) {
       const newUser: UserSubscription = {
         userId,
-        tier: SubscriptionTier.FREE,
-        creditsRemaining: SUBSCRIPTION_CONFIGS[SubscriptionTier.FREE].monthlyCredits,
+        tier: SubscriptionTier.MCP_FREE,
+        creditsRemaining: SUBSCRIPTION_CONFIGS[SubscriptionTier.MCP_FREE].monthlyCredits,
         completionsUsed: 0,
         projectsCreated: 0,
         hasDualAI: false,
@@ -108,7 +108,7 @@ export class SubscriptionManager {
     const config = SUBSCRIPTION_CONFIGS[newTier];
     
     // Validate BYOK requirements
-    if (newTier === SubscriptionTier.PRO_BYOK) {
+    if (newTier === SubscriptionTier.MCP_PRO_BYOK) {
       if (!apiKeys?.v0ApiKey || !apiKeys?.claudeApiKey) {
         throw new Error('Pro BYOK requires both V0 and Claude API keys');
       }

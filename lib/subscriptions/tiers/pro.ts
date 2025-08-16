@@ -1,7 +1,7 @@
 import { SubscriptionTier } from '../schemas';
 
 export const PRO_TIER_CONFIG = {
-  tier: SubscriptionTier.PRO,
+  tier: SubscriptionTier.MCP_PRO,
   price: 20,
   monthlyCredits: 20, // $20 usage credit
   projectLimit: -1, // Unlimited
