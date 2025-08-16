@@ -1,0 +1,35 @@
+{
+  "mcpServers": {
+    "dual-ai-orchestrator-remote": {
+      "url": "https://your-vercel-app.vercel.app/api/mcp/mcp",
+      "description": "Remote Dual AI Orchestrator - Public Access"
+    },
+    "dual-ai-orchestrator-auth": {
+      "url": "https://your-vercel-app.vercel.app/api/mcp/auth/mcp",
+      "description": "Remote Dual AI Orchestrator - Authenticated Access",
+      "env": {
+        "MCP_PROXY_AUTH_TOKEN": "your-api-key-here"
+      }
+    }
+  },
+  "_metadata": {
+    "description": "Universal MCP Configuration for Multiple AI Providers",
+    "compatibility": [
+      "Claude Desktop (Anthropic)",
+      "ChatGPT (OpenAI) - via custom GPTs and API",
+      "Cursor IDE",
+      "VS Code with Copilot",
+      "Any MCP-compatible client"
+    ],
+    "endpoints": {
+      "public": "https://your-vercel-app.vercel.app/api/mcp/mcp",
+      "authenticated": "https://your-vercel-app.vercel.app/api/mcp/auth/mcp"
+    },
+    "tools": [
+      "generate-v0: Generate UI components using V0.dev",
+      "generate-gateway: Generate content using AI Gateway/Claude",
+      "generate-dual: Orchestrated parallel generation from both providers",
+      "get-config: Retrieve available models and configuration"
+    ]
+  }
+}
